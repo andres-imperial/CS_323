@@ -6,39 +6,177 @@
 // file: parser.h
 // ----------------------------------------------------------------------------
 
+#ifndef PARSER_H
+#define PARSER_H
 #include <iostream>
+#include <stdlib.h>
 #include <cstring>
 #include <fstream>
+#include "parser_functs.h"
 using namespace std;
+const int token = 0;
+const int lexeme = 1;
+// Global variables
+string** lexerArr;
+int arrIndex = 1;
+ofstream parserFile;
 
-bool Parser(string fileName)
+bool Parser(string fileName, string sourceName, int lineCount)
 {
 
-	// Code ....
+	ifstream lexerFile;
 
-}
+	cout << "lineCount: " << lineCount << endl;
+
+	lexerArr = new string*[lineCount + 1];
+	bool compile = true;
+
+	// Open file for reading
+	lexerFile.open(fileName.c_str());
+	parserFile.open((string("parser_") + sourceName).c_str());
+
+	// If file opened properly
+	if(!lexerFile.is_open()){
+		cout << "Error file -- " << fileName << " -- could not be opened!\n";
+		return 0;
+	}
+	if(!parserFile.is_open()){
+		cout << "Error -- parser.txt could not be opened.\n";
+		return 0;
+	}
+	
+	for(int i = 0; !lexerFile.eof(); ++i){
+		lexerArr[i] = new string[2];
+		// Load array
+		lexerFile >> lexerArr[i][token]; // Token
+		lexerFile >> lexerArr[i][lexeme]; // Lexeme
+	}
+
+	// Start the Parsing at the root
+	if(!Rat16F()){
+		// Failed Parsing
+		cout << "Error unable to parse file!\n";
+		compile = false;
+	}
+
+	// Delete dynamic memory
+	for(int i = 0; i < lineCount + 1; ++i){
+		delete[] lexerArr[i];
+	}
+	delete[] lexerArr;
+
+	lexerFile.close();
+	parserFile.close();
+
+	return compile;
+
+} // End of Parser()
+
+
+// ----- ErrorMsg =------------------------------------------------------------
+// ----------------------------------------------------------------------------
+void ErrorMsg(string msg)
+{
+	// Print out error message with line number, given token and lexeme, and 
+	// expected lexeme or token
+	
+	cout << "Error on line: " << arrIndex << " -- expected " << msg 
+		<< " instead received lexeme: " << lexerArr[arrIndex][lexeme]
+		<< " token type: " << lexerArr[arrIndex][token] << endl;
+
+	// Exit program
+	exit(0);
+
+} // End of ErrorMsg()
+
+
+// ----- lexeme_is ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+bool lexeme_is(string target)
+{
+	
+	// Create compile flag
+	bool compile = true;
+
+	if(lexerArr[arrIndex][lexeme] == target){
+		++arrIndex;
+
+		parserFile << "\nToken: " << lexerArr[arrIndex][token] << "\tLexeme: "
+		<< lexerArr[arrIndex][lexeme] << endl;
+	}
+	else{
+		// Lexemes did not match
+		compile = false;
+	}
+
+	return compile;
+
+} // End of lexeme_is()
+
+
+// ----- token_is ---------------------------------------------------------------
+// ----------------------------------------------------------------------------
+bool token_is(string target)
+{
+
+	// Create compile flag
+	bool compile = true;
+
+	if(lexerArr[arrIndex][token] == target){
+		++arrIndex;
+
+		parserFile << "\nToken: " << lexerArr[arrIndex][token] << "\tLexeme: "
+		<< lexerArr[arrIndex][lexeme] << endl;
+	}
+	else{
+		// Tokens did not match
+		compile = false;
+	}
+
+	return compile;
+
+} // End of token_is()
+
 
 // ----- Rat16F ---------------------------------------------------------------
 // ----------------------------------------------------------------------------
 bool Rat16F(void)
 {
 
+	// First Production Rule
+	parserFile << "Token: " << lexerArr[arrIndex][token] << "\tLexeme: "
+		<< lexerArr[arrIndex][lexeme] << endl;
+	parserFile << "<Rat16F> -> $$ <Opt Function Definitions>\n"
+				"$$ <Opt Declaration List> <Statement List> $$\n";
+
 	// Create compile flag
 	bool compile = false;
 	// Program must start with $$ marker
-	if (lexeme_is("$$")){
-		if (Opt_Funct_Def()){
-			if (lexeme_is("$$")){
-				if (Opt_Declar_List()){
-					if (Statement_List()){
-						if (lexeme_is("$$")){
+	if(lexeme_is("$$")){
+		if(Opt_Funct_Def()){
+			if(lexeme_is("$$")){
+				if(Opt_Declar_List()){
+					if(Statement_List()){
+						if(lexeme_is("$$")){
 							// File was syntactically correct.
 							compile = true;
 						}
+						else{
+							ErrorMsg("$$");
+						}
+					}
+					else{
+						ErrorMsg("<Statement_List>");
 					}
 				}
 			}
+			else{
+				ErrorMsg("$$");
+			}
 		}
+	}
+	else{
+		ErrorMsg("$$");
 	}
 
 	return compile;
@@ -50,6 +188,9 @@ bool Rat16F(void)
 // ----------------------------------------------------------------------------
 bool Opt_Funct_Def(void)
 {
+
+	// Production Rule
+	parserFile << "<Opt Function Definitions> -> <Function Definitions> | <Empty>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -69,6 +210,9 @@ bool Opt_Funct_Def(void)
 bool Opt_Declar_List(void)
 {
 
+	// Production Rule
+	parserFile << "<Opt Declaration List> -> <Declaration List> | <Empty>\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -82,17 +226,19 @@ bool Opt_Declar_List(void)
 } // End of Opt_Declar_List()
 
 
-// ----- Statement_List ------------------------------------------------------
+// ----- Statement_List -------------------------------------------------------
 // ----------------------------------------------------------------------------
 bool Statement_List(void)
 {
 
+	// Production Rule
+	parserFile << "<Statement List> -> <Statement> | <Statement> <Statement List>\n";
+
 	// Create compile flag
 	bool compile = true;
 
-	if (Statement()){
-		if Statement_List(){
-		}
+	if(Statement()){
+		while(Statement());
 	}
 	else{
 		// Fail on Statement()
@@ -108,6 +254,10 @@ bool Statement_List(void)
 // ----------------------------------------------------------------------------
 bool Funct_Def(void)
 {
+
+	// Production Rule
+	parserFile << "<Function Definitions> -> <Function> | "
+			"<Function> <Function Definitions>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -131,11 +281,15 @@ bool Funct_Def(void)
 bool Function(void)
 {
 
+	// Production Rule
+	parserFile << "<Function> -> function  <Identifier> [ <Opt Parameter List> ] "
+			"<Opt Declaration List> <Body>\n";
+
 	// Create compile flag
 	bool compile = true;
 
 	// Function must start with keyword function
-	if (lexeme_is("function")){
+	if (lexeme_is("function")){ 
 		if (Identifier()){
 			if (lexeme_is("[")){
 				if (Opt_Param_List()){
@@ -155,6 +309,7 @@ bool Function(void)
 					}
 					else{
 						// Failed on lexeme_is("]")
+						ErrorMsg("]");
 						compile = false;
 					}
 				}
@@ -165,6 +320,7 @@ bool Function(void)
 			}
 			else{
 				// Failed on lexeme_is("[")
+				ErrorMsg("[");
 				compile = false;
 			}
 		}
@@ -191,7 +347,7 @@ bool Identifier(void)
 	// Create compile flag
 	bool compile = true;
 
-	if(!token_is("identifer")){
+	if(!token_is("identifier")){
 		// Failed on token_is identifer
 		compile = false;
 	}
@@ -201,10 +357,13 @@ bool Identifier(void)
 } // End of Identifier()
 
 
-// ----- Opt_Param_List -----------------------------------------------------------
+// ----- Opt_Param_List -------------------------------------------------------
 // ----------------------------------------------------------------------------
 bool Opt_Param_List(void)
 {
+
+	// Production Rule
+	parserFile << "<Opt Parameter List> ->  <Parameter List> | <Empty>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -224,17 +383,21 @@ bool Opt_Param_List(void)
 bool Body(void)
 {
 
+	// Production Rule
+	parserFile << "<Body> -> { <Statement List> }\n";
+
 	// Create compile flag
 	bool compile = true;
 
 	// Body must start with {
 	if(lexeme_is("{")){
 		if(Statement_List()){
-			if(lexeme_is("}"){
+			if(lexeme_is("}")){
 				// used <Body>  ::=  {  < Statement List>  }
 			}
 			else{
 				// failed on lexeme_is("}")
+				ErrorMsg("}");
 				compile = false;
 			}
 		}
@@ -245,6 +408,7 @@ bool Body(void)
 	}
 	else{
 		// failed on lexeme_is("{")
+		ErrorMsg("{");
 		compile = false;
 	}
 
@@ -258,11 +422,17 @@ bool Body(void)
 bool Param_List(void)
 {
 
+	// Production Rule
+	parserFile << "<Parameter List> -> <Parameter> | <Parameter> , "
+			"<Parameter List>\n";
+
 	// Create compile flag
 	bool compile = true;
 
     if(Parameter()){
-        Param_List();
+		while(lexeme_is(",")){
+			Parameter();
+		}
     }
     else{
         // Failed on Parameter()
@@ -279,11 +449,14 @@ bool Param_List(void)
 bool Parameter(void)
 {
 
+	// Production Rule
+	parserFile << "<Parameter> -> <IDs> : <Qualifier>\n";
+
 	// Create compile flag
 	bool compile = true;
 
     if(IDs()){
-        if(lexeme_is(":"){
+        if(lexeme_is(":")){
             if(Qualifier()){
                 // <Parameter> ::=  <IDs > : <Qualifier>
             }
@@ -294,6 +467,7 @@ bool Parameter(void)
         }
         else{
             // Failed on lexeme_is(":")
+			ErrorMsg(":");
             compile = false;
         }
     }
@@ -306,20 +480,26 @@ bool Parameter(void)
 
 } // End of Parameter()
 
-
 // ----- IDs ------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 bool IDs(void)
 {
 
+	// Production Rule
+	parserFile << "<IDs> -> <Identifier> | <Identifier>, <IDs>\n";
+
 	// Create compile flag
 	bool compile = true;
 
     if(Identifier()){
-        IDs();
+		while(lexeme_is(",")){
+			if(Identifier()){
+			}
+		}
     }
     else{
         // Failed on Identifier()
+		ErrorMsg("<identifier>");
         compile = false;
     }
 
@@ -332,6 +512,9 @@ bool IDs(void)
 // ----------------------------------------------------------------------------
 bool Qualifier(void)
 {
+
+	// Production Rule
+	parserFile << "<Qualifier> -> integer | boolean | real\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -354,6 +537,10 @@ bool Qualifier(void)
 bool Declar_List(void)
 {
 
+	// Production Rule
+	parserFile << "<Declaration List> -> <Declaration> ; | <Declaration> ; "
+			"<Declaration List>\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -363,6 +550,7 @@ bool Declar_List(void)
         }
         else{
             // Failed on lexeme_is(";")
+			ErrorMsg(";");
             compile = false;
         }
     }
@@ -381,6 +569,8 @@ bool Declar_List(void)
 bool Declaration(void)
 {
 
+	// Production Rule
+	parserFile << "<Declaration> -> <Qualifier> <IDs>\n";
 	// Create compile flag
 	bool compile = true;
 
@@ -408,6 +598,10 @@ bool Declaration(void)
 bool Statement(void)
 {
 
+	// Production Rule
+	parserFile << "<Statement> -> <Compound> | <Assign> | <If> |  <Return> | "
+				"<Write> | <Read> | <While>\n";
+	
 	// Create compile flag
 	bool compile = true;
 
@@ -431,6 +625,9 @@ bool Statement(void)
 bool Compound(void)
 {
 
+	// Production Rule
+	parserFile << "<Compound> -> { <Statement List> }\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -442,6 +639,7 @@ bool Compound(void)
             }
             else{
                 // Failed on lexeme_is("}")
+				ErrorMsg("}");
                 compile = false;
             }
         }
@@ -465,17 +663,21 @@ bool Compound(void)
 bool Assign(void)
 {
 
+	// Production Rule
+	parserFile << "<Assign> -> <Identifier> := <Expression>;\n";
+
 	// Create compile flag
 	bool compile = true;
 
     if(Identifier()){
-        if(lexeme_is(":="){
+        if(lexeme_is(":=")){
             if(Expression()){
                 if(lexeme_is(";")){
                     // <Assign> ::=   <Identifier> := <Expression> ;
                 }
                 else{
                     // Failed on lexeme_is(";")
+					ErrorMsg(";");
                     compile = false;
                 }
             }
@@ -486,6 +688,7 @@ bool Assign(void)
         }
         else{
             // Failed on lexeme_is(":=")
+			ErrorMsg(":=");
             compile = false;
         }
     }
@@ -503,6 +706,10 @@ bool Assign(void)
 // ----------------------------------------------------------------------------
 bool If(void)
 {
+
+	// Production Rule
+	parserFile << "<If> -> if (<Condition>) <Statement> endif |\n"
+		        "if (<Condition>) <Statement> else <Statement> endif\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -525,6 +732,7 @@ bool If(void)
                                 }
                                 else{
                                     // Failed on lexeme_is("endif")
+									ErrorMsg("endif");
                                     compile = false;
                                 }
                             }
@@ -535,6 +743,7 @@ bool If(void)
                         }
                         else{
                             // Failed on lexeme_is() expected endif or else
+							ErrorMsg("endif | else");
                             compile = false;
                         }
                     }
@@ -545,6 +754,7 @@ bool If(void)
                 }
                 else{
                     // Failed on lexeme_is(")")
+					ErrorMsg(")");
                     compile = false;
                 }
             }
@@ -555,6 +765,7 @@ bool If(void)
         }
         else{
             // Failed on lexeme_is("(")
+			ErrorMsg("(");
             compile = false;
         }
     }
@@ -573,6 +784,9 @@ bool If(void)
 bool Return(void)
 {
 
+	// Production Rule
+	parserFile << "<Return> -> return ; | return <Expression> ;\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -586,11 +800,13 @@ bool Return(void)
             }
             else{
                 // Failed on lexeme_is(";")
+				ErrorMsg(";");
                 compile = false;
             }
         }
         else{
             // Failed, expected ";" or Expression
+			ErrorMsg("; | <Expression>");
             compile = false;
         }
     }
@@ -609,6 +825,9 @@ bool Return(void)
 bool Write(void)
 {
 
+	// Production Rule
+	parserFile << "<Write> -> print (<Expression>);\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -622,11 +841,13 @@ bool Write(void)
                     }
                     else{
                         // Failed on lexeme_is(";")
+						ErrorMsg(";");
                         compile = false;
                     }
                 }
                 else{
                     // Failed on lexeme_is(")")
+					ErrorMsg(")");
                     compile = false;
                 }
             }
@@ -637,6 +858,7 @@ bool Write(void)
         }
         else{
             // Failed on lexeme_is("(")
+			ErrorMsg("(");
             compile = false;
         }
     }
@@ -655,6 +877,9 @@ bool Write(void)
 bool Read(void)
 {
 
+	// Production Rule
+	parserFile << "<Read> -> read (<IDs>);\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -668,11 +893,13 @@ bool Read(void)
                     }
                     else{
                         // Failed on lexeme_is(";")
+						ErrorMsg(";");
                         compile = false;
                     }
                 }
                 else{
                     // Failed on lexeme_is(")")
+					ErrorMsg(")");
                     compile = false;
                 }
             }
@@ -683,6 +910,7 @@ bool Read(void)
         }
         else{
             // Failed on lexeme_is("(")
+			ErrorMsg("(");
             compile = false;
         }
     }
@@ -700,6 +928,9 @@ bool Read(void)
 // ----------------------------------------------------------------------------
 bool While(void)
 {
+
+	// Production Rule
+	parserFile << "<While> -> while (<Condition>) <Statement>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -719,6 +950,7 @@ bool While(void)
                 }
                 else{
                     // Failed on lexeme_is(")")
+					ErrorMsg(")");
                     compile = false;
                 }
             }
@@ -729,6 +961,7 @@ bool While(void)
         }
         else{
             // Failed on lexeme_is("(")
+			ErrorMsg("(");
             compile = false;
         }
     }
@@ -746,6 +979,9 @@ bool While(void)
 // ----------------------------------------------------------------------------
 bool Expression(void)
 {
+
+	// Production Rule
+	parserFile << "<Expression> -> <Term> <Expression Prime>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -773,6 +1009,9 @@ bool Expression(void)
 // ----------------------------------------------------------------------------
 bool Condition(void)
 {
+
+	// Production Rule
+	parserFile << "<Condition> -> <Expression> <Relop> <Expression>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -807,6 +1046,9 @@ bool Condition(void)
 bool Relop(void)
 {
 
+	// Production Rule
+	parserFile << "<Relop> -> = | /= | > | < | => | <=\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -816,6 +1058,7 @@ bool Relop(void)
     }
     else{
         // Failed on <Relop> ::=   = |  /=  |   >   | <   |  =>   | <=
+		ErrorMsg("= | /= | > | < | => | <=");
         compile = false;
     }
 
@@ -828,6 +1071,10 @@ bool Relop(void)
 // ----------------------------------------------------------------------------
 bool Expression_Prime(void)
 {
+
+	// Production Rule
+	parserFile << "<Expression Prime> -> +<Term> <Expression Prime> | "
+				"-<Term> <Expression Prime> | epsilon\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -850,8 +1097,7 @@ bool Expression_Prime(void)
     }
     else{
         // Was empty and moved to epsilon
-        // <Expression Prime> ::= +<Term> <Expression Prime> | -<Term>
-        // <Expression Prime> | epsilon
+        // <Expression Prime> ::= epsilon
     }
 
     return compile;
@@ -863,6 +1109,9 @@ bool Expression_Prime(void)
 // ----------------------------------------------------------------------------
 bool Term(void)
 {
+
+	// Production Rule
+	parserFile << "<Term> -> <Factor> <Term Prime>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -891,6 +1140,10 @@ bool Term(void)
 bool Term_Prime(void)
 {
 
+	// Production Rule
+	parserFile << "<Term Prime> -> * <Factor> <Term Prime> | "
+				"/ Factor <Term Prime> | epsilon\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -912,8 +1165,7 @@ bool Term_Prime(void)
     }
     else{
         // It moved to epsilon
-        // <Term Prime> ::=  * <Factor> <Term Prime> | / Factor <Term Prime> |
-        // epsilon
+        // <Term Prime> ::= epsilon
     }
 
     return compile;
@@ -925,6 +1177,9 @@ bool Term_Prime(void)
 // ----------------------------------------------------------------------------
 bool Factor(void)
 {
+
+	// Production Rule
+	parserFile << "<Factor> -> - <Primary> | <Primary>\n";
 
 	// Create compile flag
 	bool compile = true;
@@ -943,6 +1198,7 @@ bool Factor(void)
     }
     else{
         // Failed expected "-" or Primary
+		ErrorMsg("- | <Primary>");
         compile = false;
     }
 
@@ -956,6 +1212,10 @@ bool Factor(void)
 bool Primary(void)
 {
 
+	// Production Rule
+	parserFile << "<Primary> -> <Identifier> | <Integer> | <Identifier> "
+				"[<IDs>] | (<Expression>) | <Real> | true | false\n";
+
 	// Create compile flag
 	bool compile = true;
 
@@ -967,6 +1227,7 @@ bool Primary(void)
                 }
                 else{
                     // Failed on lexeme_is("]")
+					ErrorMsg("]");
                     compile = false;
                 }
             }
@@ -979,7 +1240,7 @@ bool Primary(void)
             // <Primary> ::= <Identifier>
         }
     }
-    else if(lexeme_is("integer")){
+    else if(token_is("integer")){
         // <Primary> ::= <Integer>
     }
     else if(lexeme_is("(")){
@@ -989,6 +1250,7 @@ bool Primary(void)
             }
             else{
                 // Failed on lexeme_is(")")
+				ErrorMsg(")");
                 compile = false;
             }
         }
@@ -1005,6 +1267,8 @@ bool Primary(void)
     }
     else{
         // Failed expected . . . .
+		ErrorMsg("<Identifier> | <Integer> | <Identifier> [<IDs>] | "
+				"<Expression> | <Real> | true | false");
         compile = false;
     }
 
@@ -1012,3 +1276,4 @@ bool Primary(void)
 
 } // End of Primary()
 
+#endif // End of parser.h

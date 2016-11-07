@@ -1,0 +1,13 @@
+Token               Lexeme
+
+separator           $$
+separator           $$
+separator           {
+identifier          a
+operator            :=
+identifier          b
+operator            +
+identifier          c
+separator           ;
+separator           }
+separator           $$

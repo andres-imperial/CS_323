@@ -14,6 +14,7 @@
 #include <string>
 #include <fstream>
 #include "lexer.h"
+#include "parser.h"
 using namespace std;
 
 // ---- main ------------------------------------------------------------------
@@ -66,9 +67,11 @@ int main(int argc,char*argv[]){
   
   string token;
   string lexeme;
+  int lineCount = 0;
 
   // Set up lexer files column names.
   lexerFile << left << setw(20) << "Token" << "Lexeme\n\n";
+  ++lineCount;
 
   // Continue loop until end of file is reached.
   while(!sourceFile.eof()){
@@ -76,12 +79,16 @@ int main(int argc,char*argv[]){
     lexeme = lexer(sourceFile, token);
     if(lexeme != "-1"){
       lexerFile << left << setw(20) << token << lexeme << endl;
+	  ++lineCount;
     }
   }
 
   // Close filestreams.
   sourceFile.close();
   lexerFile.close();
+
+  // Once the file has been lexically analyzed send it to be parsed.
+  Parser(lexerFileName, argv[1], lineCount);
 
   return 0;
 
