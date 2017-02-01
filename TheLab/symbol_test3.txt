@@ -1,0 +1,7 @@
+Identifier          Memory Location          Type
+i                   6000                     integer
+max                 6001                     integer
+sum                 6002                     integer
+low                 6003                     integer
+high                6004                     integer
+step                6005                     integer

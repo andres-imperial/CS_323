@@ -1,7 +1,0 @@
-Test_1.txt 
-
-Separators: $$, [, ], ,, :, {, }, ;, (, ).
-Operators: :=, =, /=, >, <, =>, <=, +, -, *, /, -.
-Keywords: function, integer, boolean, real, if, endif, else, return, print,
-read, while, true, false.
-Unknown characters: !@#$%^&\|?"'`~._

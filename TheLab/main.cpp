@@ -57,11 +57,11 @@ int main(int argc,char*argv[]){
   lexerFile.open(lexerFileName.c_str());
 
   if(!sourceFile.is_open()){
-    cout << "Error file -- " << sourceFile << " -- couldn't be opened!\n";
+    cout << "Error file -- " << argv[1] << " -- couldn't be opened!\n";
     return 0;
   }
   else if(!lexerFile.is_open()){
-    cout << "Error file -- " << lexerFile << " -- could not be opened!\n";
+    cout << "Error file -- " << lexerFileName << " -- could not be opened!\n";
     return 0;
   }
   

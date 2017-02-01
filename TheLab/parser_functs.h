@@ -47,5 +47,8 @@ bool Term(void);
 bool Term_Prime(void);
 bool Factor(void);
 bool Primary(void);
+void Print_Instructions(void);
+void Back_Patch(int jump_addr);
+void Gen_Instr(string op, string oprnd);
 
-#endif // End of parser_functs.h 
+#endif // End of parser_functs.h

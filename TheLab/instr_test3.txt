@@ -1,0 +1,42 @@
+1    STDIN          
+2    POPM      6003 
+3    STDIN          
+4    POPM      6004 
+5    STDIN          
+6    POPM      6005 
+7    LABEL          
+8    PUSHM     6003 
+9    PUSHM     6004 
+10   LES            
+11   JUMPZ     19   
+12   PUSHM     6003 
+13   STDOUT         
+14   PUSHM     6003 
+15   PUSHM     6005 
+16   ADD            
+17   POPM      6003 
+18   JUMP      7    
+19   PUSHI     0    
+20   POPM      6002 
+21   PUSHI     1    
+22   POPM      6000 
+23   STDIN          
+24   POPM      6001 
+25   LABEL          
+26   PUSHM     6000 
+27   PUSHM     6001 
+28   LES            
+29   JUMPZ     39   
+30   PUSHM     6002 
+31   PUSHM     6000 
+32   ADD            
+33   POPM      6002 
+34   PUSHM     6000 
+35   PUSHI     1    
+36   ADD            
+37   POPM      6000 
+38   JUMP      25   
+39   PUSHM     6002 
+40   PUSHM     6001 
+41   ADD            
+42   STDOUT         
