@@ -1,4 +1,0 @@
-Identifier          Memory Location          Type
-max                 6000                     integer
-coffee              6001                     boolean
-tea                 6002                     boolean

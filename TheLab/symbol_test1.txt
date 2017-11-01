@@ -1,4 +1,0 @@
-Identifier          Memory Location          Type
-i                   6000                     integer
-max                 6001                     integer
-sum                 6002                     integer

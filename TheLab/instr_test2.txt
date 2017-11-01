@@ -1,8 +1,0 @@
-1    PUSHI     1    
-2    POPM      6001 
-3    PUSHI     0    
-4    POPM      6002 
-5    STDIN          
-6    POPM      6000 
-7    PUSHM     6000 
-8    STDOUT         
